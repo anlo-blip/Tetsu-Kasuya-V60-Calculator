@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حاسبة تيتسو كاسويا V60</title>
+  <style>
+    :root{
+      --bg1:#1b1410;
+      --bg2:#2b2118;
+      --card:#3a2c1f;
+      --text:#f5e6d3;
+      --muted:#c9b8a3;
+      --accent:#d4a574;
+      --accent-dark:#b98b5b;
+      --border:rgba(212,165,116,.18);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+      padding:18px;
+      line-height:1.6;
+    }
+    .wrap{max-width:920px;margin:0 auto}
+    .card{
+      background:rgba(58,44,31,.72);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:22px;
+      margin-bottom:18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter:blur(8px);
+    }
+    header{
+      text-align:center;
+      position:relative;
+      padding:28px 20px;
+    }
+    h1{
+      color:var(--accent);
+      font-size:2rem;
+      margin-bottom:8px;
+    }
+    .subtitle{color:var(--muted)}
+    .lang-btn{
+      position:absolute;
+      left:14px;
+      top:14px;
+      border:1px solid var(--border);
+      background:rgba(212,165,116,.12);
+      color:var(--accent);
+      padding:7px 12px;
+      border-radius:999px;
+      cursor:pointer;
+      font-size:.9rem;
+    }
+    .lang-btn:hover{background:var(--accent);color:var(--bg1)}
+    h2{color:var(--accent);margin-bottom:16px;font-size:1.18rem}
+    .form-group{margin-bottom:16px}
+    label{
+      display:block;
+      margin-bottom:8px;
+      color:var(--muted);
+      font-weight:600;
+    }
+    input,select{
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--bg2);
+      color:var(--text);
+      font-size:1rem;
+    }
+    .btn{
+      width:100%;
+      border:none;
+      border-radius:10px;
+      padding:14px;
+      cursor:pointer;
+      font-size:1rem;
+      font-weight:700;
+      background:var(--accent);
+      color:var(--bg1);
+      margin-top:6px;
+    }
+    .btn:hover{background:var(--accent-dark)}
+    .btn-secondary{
+      background:transparent;
+      color:var(--accent);
+      border:1px solid var(--accent);
+    }
+    .btn-secondary:hover{
+      background:var(--accent);
+      color:var(--bg1);
+    }
+    .results{display:none}
+    .results.active{display:block}
+    .summary-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:12px;
+    }
+    .summary-item{
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      text-align:center;
+    }
+    .summary-item .label{
+      color:var(--muted);
+      font-size:.82rem;
+      margin-bottom:8px;
+    }
+    .summary-item .value{
+      color:var(--accent);
+      font-size:1.22rem;
+      font-weight:800;
+    }
+    .table-wrap{overflow:auto}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:.92rem;
+    }
+    th,td{
+      border:1px solid var(--border);
+      padding:10px;
+      text-align:right;
+    }
+    th{
+      background:var(--bg2);
+      color:var(--accent);
+    }
+    .analysis{
+      background:var(--bg2);
+      border-right:4px solid var(--accent);
+      border-radius:10px;
+      padding:14px;
+    }
+    .analysis p{margin-bottom:10px}
+    .button-group{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:10px;
+    }
+    .favorite-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      margin-bottom:10px;
+    }
+    .favorite-title{color:var(--accent);font-weight:700;font-size:.92rem}
+    .favorite-sub{color:var(--muted);font-size:.8rem}
+    .mini-btn{
+      border:none;
+      border-radius:8px;
+      padding:6px 10px;
+      cursor:pointer;
+      font-size:.78rem;
+      margin-inline-start:6px;
+    }
+    .mini-load{background:var(--accent);color:var(--bg1)}
+    .mini-del{background:#5a2b2b;color:#fff}
+    .philosophy-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:12px;
+    }
+    .ph-item{
+      background:var(--bg2);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+    }
+    .ph-item h3{
+      color:var(--accent);
+      margin-bottom:8px;
+      font-size:1rem;
+    }
+    .linkish{
+      color:var(--accent);
+      text-decoration:underline;
+      cursor:pointer;
+    }
+    .modal-backdrop{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.72);
+      z-index:9998;
+    }
+    .modal-backdrop.active{display:block}
+    .modal{
+      display:none;
+      position:fixed;
+      z-index:9999;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      width:92%;
+      max-width:760px;
+      max-height:84vh;
+      overflow:hidden;
+      background:#2a2017;
+      border:1px solid var(--border);
+      border-radius:18px;
+    }
+    .modal.active{display:block}
+    .modal-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:16px 18px;
+      border-bottom:1px solid var(--border);
+      background:rgba(212,165,116,.12);
+    }
+    .modal-header h3{color:var(--accent);font-size:1.05rem}
+    .modal-close{
+      background:transparent;
+      color:var(--accent);
+      border:none;
+      font-size:1.4rem;
+      cursor:pointer;
+    }
+    .modal-body{
+      padding:18px;
+      overflow:auto;
+      max-height:calc(84vh - 70px);
+    }
+    .modal-body h4{
+      color:var(--accent);
+      margin:16px 0 8px;
+    }
+    .modal-body p,.modal-body li{color:var(--muted)}
+    .modal-body ul{padding-inline-start:20px}
+    @media (max-width:768px){
+      h1{font-size:1.65rem}
+      .lang-btn{position:static;margin-bottom:14px}
+      header{text-align:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="card">
+      <button class="lang-btn" id="langBtn" onclick="toggleLang()">🌐 English</button>
+      <h1 id="mainTitle">☕ حاسبة <span class="linkish" onclick="openModal()">تيتسو كاسويا</span> V60</h1>
+      <p class="subtitle" id="subtitle">طريقة 4:6 الاحترافية لتحضير القهوة المختصة</p>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <p id="devLine" style="color:var(--muted);font-size:.92rem;margin-bottom:4px"><strong style="color:var(--accent)">إعداد:</strong> عبدالعزيز اللهيم</p>
+        <p id="snapLine" style="color:var(--muted);font-size:.88rem"><strong style="color:var(--accent)">سناب شات:</strong> AZOZ_MEMO</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2 id="settingsTitle">⚙️ إعدادات الوصفة</h2>
+
+      <div class="form-group">
+        <label for="coffeeWeight" id="coffeeWeightLabel">وزن البن (g)</label>
+        <input type="number" id="coffeeWeight" value="20" min="10" max="50" step="0.5">
+      </div>
+
+      <div class="form-group">
+        <label for="ratio" id="ratioLabel">نسبة الماء للبن (الريشو)</label>
+        <select id="ratio">
+          <option value="14">1:14</option>
+          <option value="15" selected>1:15</option>
+          <option value="16">1:16</option>
+          <option value="17">1:17</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="balance" id="balanceLabel">التوازن الحسي</label>
+        <select id="balance">
+          <option value="balanced">متوازن</option>
+          <option value="sweetness-light">إبراز حلاوة بسيطة</option>
+          <option value="acidity-light">إبراز حموضة بسيطة</option>
+          <option value="sweetness-medium">إبراز حلاوة متوسطة</option>
+          <option value="acidity-medium">إبراز حموضة متوسطة</option>
+          <option value="sweetness-high">إبراز حلاوة عالية</option>
+          <option value="acidity-high">إبراز حموضة عالية</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="body" id="bodyLabel">القوام</label>
+        <select id="body">
+          <option value="light">خفيف</option>
+          <option value="medium" selected>متوسط</option>
+          <option value="heavy">ثقيل</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="process" id="processLabel">المعالجة</label>
+        <select id="process">
+          <option value="washed" selected>مغسول</option>
+          <option value="honey">هوني</option>
+          <option value="natural">مجفف</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="roast" id="roastLabel">التحميص</label>
+        <select id="roast">
+          <option value="light" selected>فاتح</option>
+          <option value="medium">متوسط</option>
+        </select>
+      </div>
+
+      <button class="btn" id="calcButton" onclick="calculateRecipe()">🧮 حساب الوصفة</button>
+    </section>
+
+    <section class="results" id="results">
+      <div class="card">
+        <h2 id="summaryTitle">📋 ملخص الوصفة</h2>
+        <div class="summary-grid" id="summaryGrid"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="poursTitle">💧 خطة الصبات</h2>
+        <div class="table-wrap">
+          <table id="poursTable"></table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 id="sensoryTitle">🎯 التحليل الحسي</h2>
+        <div class="analysis" id="analysisText"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="adjustTitle">🔧 ملاحظات الضبط</h2>
+        <div class="analysis" id="adjustmentNotes"></div>
+      </div>
+
+      <div class="card" id="favoritesCard" style="display:none">
+        <h2 id="favoritesTitle">⭐ الوصفات المفضلة</h2>
+        <div id="favoritesList"></div>
+      </div>
+
+      <div class="button-group">
+        <button class="btn btn-secondary" id="resetButton" onclick="resetForm()">🔄 إعادة ضبط</button>
+        <button class="btn btn-secondary" id="copyButton" onclick="copyRecipe()">📋 نسخ الوصفة</button>
+        <button class="btn btn-secondary" id="downloadButton" onclick="downloadRecipe()">💾 تحميل الوصفة</button>
+        <button class="btn btn-secondary" id="favoriteButton" onclick="saveFavorite()">⭐ إضافة إلى المفضلة</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 id="philosophyTitle">☕ فلسفة 4:6</h2>
+      <div class="philosophy-grid">
+        <div class="ph-item">
+          <h3 id="philosophy40">🎨 أول 40٪</h3>
+          <p id="philosophy40Text">مخصصة للتحكم في الحلاوة والحموضة عبر أول صبتين. توزيع الماء بينهما يحدد الطابع الحسي للقهوة.</p>
+        </div>
+        <div class="ph-item">
+          <h3 id="philosophy60">💪 آخر 60٪</h3>
+          <p id="philosophy60Text">مخصصة للتحكم في القوام والجسم. عدد الصبات يحدد كثافة القهوة النهائية.</p>
+        </div>
+        <div class="ph-item">
+          <h3 id="philosophyBalance">⚖️ التوازن</h3>
+          <p id="philosophyBalanceText">زيادة عدد الصبات الأخيرة = قوام أخف وأنظف. تقليل عدد الصبات = قوام أثقل وأكثر كثافة.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal()"></div>
+  <div class="modal" id="aboutModal">
+    <div class="modal-header">
+      <h3 id="modalTitle">☕ تيتسو كاسويا: الرجل الذي غيّر طريقة تحضير القهوة</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+
+  <script>
+    let currentLang = 'ar';
+
+    const translations = {
+      ar: {
+        title: '☕ حاسبة <span class="linkish" onclick="openModal()">تيتسو كاسويا</span> V60',
+        subtitle: 'طريقة 4:6 الاحترافية لتحضير القهوة المختصة',
+        developedByLabel: 'إعداد:',
+        developedByName: 'عبدالعزيز اللهيم',
+        snapchatLabel: 'سناب شات:',
+        snapchatUser: 'AZOZ_MEMO',
+        langToggle: '🌐 English',
+        settingsTitle: '⚙️ إعدادات الوصفة',
+        coffeeWeightLabel: 'وزن البن (g)',
+        ratioLabel: 'نسبة الماء للبن (الريشو)',
+        balanceLabel: 'التوازن الحسي',
+        bodyLabel: 'القوام',
+        processLabel: 'المعالجة',
+        roastLabel: 'التحميص',
+        calcButton: '🧮 حساب الوصفة',
+        summaryTitle: '📋 ملخص الوصفة',
+        poursTitle: '💧 خطة الصبات',
+        sensoryTitle: '🎯 التحليل الحسي',
+        adjustTitle: '🔧 ملاحظات الضبط',
+        favoritesTitle: '⭐ الوصفات المفضلة',
+        btnReset: '🔄 إعادة ضبط',
+        btnCopy: '📋 نسخ الوصفة',
+        btnDownload: '💾 تحميل الوصفة',
+        btnFavorite: '⭐ إضافة إلى المفضلة',
+        philosophyTitle: '☕ فلسفة 4:6',
+        philosophy40: '🎨 أول 40٪',
+        philosophy40Text: 'مخصصة للتحكم في الحلاوة والحموضة عبر أول صبتين. توزيع الماء بينهما يحدد الطابع الحسي للقهوة.',
+        philosophy60: '💪 آخر 60٪',
+        philosophy60Text: 'مخصصة للتحكم في القوام والجسم. عدد الصبات يحدد كثافة القهوة النهائية.',
+        philosophyBalance: '⚖️ التوازن',
+        philosophyBalanceText: 'زيادة عدد الصبات الأخيرة = قوام أخف وأنظف. تقليل عدد الصبات = قوام أثقل وأكثر كثافة.',
+        balanceOptions: {
+          balanced: 'متوازن',
+          'sweetness-light': 'إبراز حلاوة بسيطة',
+          'acidity-light': 'إبراز حموضة بسيطة',
+          'sweetness-medium': 'إبراز حلاوة متوسطة',
+          'acidity-medium': 'إبراز حموضة متوسطة',
+          'sweetness-high': 'إبراز حلاوة عالية',
+          'acidity-high': 'إبراز حموضة عالية'
+        },
+        bodyOptions: { light: 'خفيف', medium: 'متوسط', heavy: 'ثقيل' },
+        processOptions: { washed: 'مغسول', honey: 'هوني', natural: 'مجفف' },
+        roastOptions: { light: 'فاتح', medium: 'متوسط' },
+        summaryLabels: ['وزن البن','الماء الكلي','الريشو','الحرارة','الطحن','RPM','الزمن المستهدف'],
+        tableHeaders: ['الدور','كمية الماء','التوقيت','رقم الصبة'],
+        purposes: { acidity:'موازنة الحموضة', sweetness:'موازنة الحلاوة', body:'بناء القوام' },
+        sensoryProfileLabel: '🎯 الطابع الحسي:',
+        processImpactLabel: '🌱 تأثير المعالجة:',
+        expectedCupLabel: '☕ النتيجة المتوقعة:',
+        copySuccess: '✅ تم نسخ الوصفة بنجاح',
+        needRecipeFirst: '📌 احسب الوصفة أولاً',
+        favSaved: '✅ تم حفظ الوصفة في المفضلة',
+        favExists: '⭐ الوصفة محفوظة مسبقًا',
+        loadText: 'تحميل',
+        deleteText: 'حذف',
+        modalTitle: '☕ تيتسو كاسويا: الرجل الذي غيّر طريقة تحضير القهوة',
+        modalHtml: `
+          <p>في عالم القهوة المختصة، هناك أسماء قليلة تركت أثرًا حقيقيًا في طرق التحضير، ومن أبرزها <strong>تيتسو كاسويا</strong> الذي فاز ببطولة العالم لتحضير القهوة المقطرة عام 2016.</p>
+          <h4>ما الذي ميّزه؟</h4>
+          <p>قدّم كاسويا طريقة 4:6 باستخدام V60، وهي طريقة تعتمد على تقسيم ماء التحضير إلى 40٪ و60٪ للتحكم في التوازن بين الحلاوة والحموضة ثم التحكم في القوام.</p>
+          <h4>فكرة 4:6</h4>
+          <ul>
+            <li>أول 40٪: تضبط الطابع الحسي بين الحلاوة والحموضة.</li>
+            <li>آخر 60٪: تضبط القوام وقوة المشروب.</li>
+          </ul>
+          <h4>لماذا أصبحت مشهورة؟</h4>
+          <p>لأنها تعطي المحضر طريقة عملية وواضحة لفهم أثر توزيع الماء على الاستخلاص، لذلك أصبحت من أشهر طرق V60 بين محبي القهوة المختصة.</p>
+        `
+      },
+      en: {
+        title: '☕ Tetsu Kasuya V60 Brew Calculator',
+        subtitle: 'The 4:6 method for precise, balanced pour-over coffee',
+        developedByLabel: 'Developed by:',
+        developedByName: 'Abdulaziz Allohaim',
+        snapchatLabel: 'Snapchat:',
+        snapchatUser: 'AZOZ_MEMO',
+        langToggle: '🌐 عربي',
+        settingsTitle: '⚙️ Brew settings',
+        coffeeWeightLabel: 'Coffee dose (g)',
+        ratioLabel: 'Brew ratio (water : coffee)',
+        balanceLabel: 'Flavor balance',
+        bodyLabel: 'Body',
+        processLabel: 'Processing method',
+        roastLabel: 'Roast level',
+        calcButton: '🧮 Calculate recipe',
+        summaryTitle: '📋 Recipe summary',
+        poursTitle: '💧 Pouring plan',
+        sensoryTitle: '🎯 Sensory profile',
+        adjustTitle: '🔧 Dial-in tips',
+        favoritesTitle: '⭐ Favorite recipes',
+        btnReset: '🔄 Reset',
+        btnCopy: '📋 Copy recipe',
+        btnDownload: '💾 Download recipe',
+        btnFavorite: '⭐ Save to favorites',
+        philosophyTitle: '☕ The 4:6 philosophy',
+        philosophy40: '🎨 First 40%',
+        philosophy40Text: 'Used to control sweetness and acidity through the first two pours.',
+        philosophy60: '💪 Last 60%',
+        philosophy60Text: 'Used to control strength and body through the remaining pours.',
+        philosophyBalance: '⚖️ Balance',
+        philosophyBalanceText: 'More finishing pours = lighter body. Fewer pours = heavier body.',
+        balanceOptions: {
+          balanced: 'Balanced',
+          'sweetness-light': 'Slightly sweet-leaning',
+          'acidity-light': 'Slightly acidity-leaning',
+          'sweetness-medium': 'Medium sweetness emphasis',
+          'acidity-medium': 'Medium acidity emphasis',
+          'sweetness-high': 'High sweetness emphasis',
+          'acidity-high': 'High acidity emphasis'
+        },
+        bodyOptions: { light: 'Light body', medium: 'Medium body', heavy: 'Heavy body' },
+        processOptions: { washed: 'Washed', honey: 'Honey', natural: 'Natural' },
+        roastOptions: { light: 'Light roast', medium: 'Medium roast' },
+        summaryLabels: ['Coffee dose','Total brew water','Brew ratio','Water temperature','Grind setting','RPM','Target brew time'],
+        tableHeaders: ['Purpose','Water per pour','Time','Pour number'],
+        purposes: { acidity:'Balance acidity', sweetness:'Balance sweetness', body:'Build body & strength' },
+        sensoryProfileLabel: '🎯 Flavor profile:',
+        processImpactLabel: '🌱 Processing impact:',
+        expectedCupLabel: '☕ Expected cup:',
+        copySuccess: '✅ Recipe copied successfully',
+        needRecipeFirst: '📌 Please calculate a recipe first',
+        favSaved: '✅ Recipe saved to favorites',
+        favExists: '⭐ Recipe already saved',
+        loadText: 'Load',
+        deleteText: 'Delete',
+        modalTitle: '☕ Tetsu Kasuya: The barista who reshaped V60 brewing',
+        modalHtml: `
+          <p>In specialty coffee, few brewers have changed modern pour-over culture as clearly as <strong>Tetsu Kasuya</strong>, winner of the 2016 World Brewers Cup.</p>
+          <h4>What made him famous?</h4>
+          <p>He introduced the well-known 4:6 method with the V60, a practical brewing approach based on splitting total brew water into 40% and 60%.</p>
+          <h4>The 4:6 idea</h4>
+          <ul>
+            <li>First 40%: adjusts sweetness and acidity balance.</li>
+            <li>Last 60%: adjusts body and overall strength.</li>
+          </ul>
+          <h4>Why it matters</h4>
+          <p>The method gives brewers a clear structure for controlling extraction through pour distribution, which is why it became so popular in specialty coffee.</p>
+        `
+      }
+    };
+
+    function safeSet(key, value) {
+      try { localStorage.setItem(key, value); } catch(e) {}
+    }
+
+    function safeGet(key, fallback = null) {
+      try {
+        const v = localStorage.getItem(key);
+        return v === null ? fallback : v;
+      } catch(e) {
+        return fallback;
+      }
+    }
+
+    function calculatePourSplit(balance, first40) {
+      const splits = {
+        balanced: [0.5, 0.5],
+        'sweetness-light': [0.45, 0.55],
+        'acidity-light': [0.55, 0.45],
+        'sweetness-medium': [0.4, 0.6],
+        'acidity-medium': [0.6, 0.4],
+        'sweetness-high': [0.35, 0.65],
+        'acidity-high': [0.65, 0.35]
+      };
+      const [p1, p2] = splits[balance] || [0.5, 0.5];
+      return { pour1: Math.round(first40 * p1), pour2: Math.round(first40 * p2) };
+    }
+
+    function calculateTemperature(process, roast) {
+      let temp = 92;
+      if (roast === 'light') temp += 1;
+      if (process === 'washed') temp += 1;
+      if (process === 'natural') temp -= 1;
+      return temp;
+    }
+
+    function calculateGrindSize(ratio, body, roast, process) {
+      let grind = 53;
+      if (ratio >= 16) grind += 2;
+      if (body === 'light') grind -= 2;
+      if (body === 'heavy') grind += 2;
+      if (roast === 'light') grind -= 2;
+      if (process === 'natural') grind += 3;
+      if (process === 'washed') grind -= 2;
+      return Math.max(45, Math.min(60, grind));
+    }
+
+    function calculateRPM(process, body) {
+      let rpm = 100;
+      if (process === 'natural') rpm -= 15;
+      if (process === 'washed') rpm += 10;
+      if (body === 'light') rpm += 10;
+      if (body === 'heavy') rpm -= 10;
+      return rpm;
+    }
+
+    function calculateTargetTime(roast, process, body, grind) {
+      let min = 2, sec = 30;
+      if (roast === 'light') sec += 15;
+      if (process === 'natural') sec += 10;
+      if (body === 'heavy') sec += 10;
+      if (grind < 50) sec -= 10;
+      if (grind > 55) sec += 10;
+      if (sec >= 60) { min += Math.floor(sec / 60); sec = sec % 60; }
+      const endSecRaw = sec + 20;
+      const endMin = min + Math.floor(endSecRaw / 60);
+      const endSec = endSecRaw % 60;
+      return `${min}:${String(sec).padStart(2,'0')} – ${endMin}:${String(endSec).padStart(2,'0')}`;
+    }
+
+    function calculateRecipe() {
+      const coffeeWeight = parseFloat(document.getElementById('coffeeWeight').value || 20);
+      const ratio = parseFloat(document.getElementById('ratio').value || 15);
+      const balance = document.getElementById('balance').value;
+      const body = document.getElementById('body').value;
+      const process = document.getElementById('process').value;
+      const roast = document.getElementById('roast').value;
+
+      const totalWater = Math.round(coffeeWeight * ratio);
+      const first40 = totalWater * 0.4;
+      const last60 = totalWater * 0.6;
+      const split = calculatePourSplit(balance, first40);
+      const numberOfPours = body === 'heavy' ? 4 : body === 'medium' ? 5 : 6;
+      const poursInLast60 = numberOfPours - 2;
+      const each = Math.round(last60 / poursInLast60);
+      const timings = ['1:20','1:50','2:15','2:40'];
+
+      const pours = [
+        { number:1, water:split.pour1, time:'0:00', purposeKey:'acidity' },
+        { number:2, water:split.pour2, time:'0:45', purposeKey:'sweetness' }
+      ];
+
+      for (let i = 0; i < poursInLast60; i++) {
+        pours.push({
+          number: i + 3,
+          water: each,
+          time: timings[i] || `${i + 2}:00`,
+          purposeKey:'body'
+        });
+      }
+
+      const temp = calculateTemperature(process, roast);
+      const grindSize = calculateGrindSize(ratio, body, roast, process);
+      const rpm = calculateRPM(process, body);
+      const targetTime = calculateTargetTime(roast, process, body, grindSize);
+
+      const data = { coffeeWeight, totalWater, ratio, temp, grindSize, rpm, targetTime, pours, balance, body, process, roast };
+      safeSet('lastRecipe', JSON.stringify(data));
+      displayResults(data);
+
+      document.getElementById('results').classList.add('active');
+      document.getElementById('results').scrollIntoView({ behavior:'smooth' });
+    }
+
+    function displayResults(data) {
+      const t = translations[currentLang];
+
+      const summary = [
+        `${data.coffeeWeight}g`,
+        `${data.totalWater}ml`,
+        `1:${data.ratio}`,
+        `${data.temp}°C`,
+        `${data.grindSize}`,
+        `${data.rpm}`,
+        `${data.targetTime}`
+      ];
+
+      document.getElementById('summaryGrid').innerHTML = t.summaryLabels.map((label, i) => `
+        <div class="summary-item">
+          <div class="label">${label}</div>
+          <div class="value">${summary[i]}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('poursTable').innerHTML = `
+        <thead>
+          <tr>
+            <th>${t.tableHeaders[0]}</th>
+            <th>${t.tableHeaders[1]}</th>
+            <th>${t.tableHeaders[2]}</th>
+            <th>${t.tableHeaders[3]}</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.pours.map(p => `
+            <tr>
+              <td>${t.purposes[p.purposeKey]}</td>
+              <td>${p.water} ml</td>
+              <td>${p.time}</td>
+              <td>${currentLang === 'ar' ? 'الصبة ' : 'Pour '}${p.number}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+
+      const flavorMapAr = {
+        balanced:'متوازنة بين الحلاوة والحموضة',
+        'sweetness-light':'تميل قليلًا للحلاوة',
+        'acidity-light':'تميل قليلًا للحموضة',
+        'sweetness-medium':'حلاوة أوضح وتوازن جيد',
+        'acidity-medium':'حموضة متوسطة ومنعشة',
+        'sweetness-high':'حلاوة عالية وقوام ألطف',
+        'acidity-high':'حموضة مشرقة وواضحة'
+      };
+
+      const flavorMapEn = {
+        balanced:'A balanced cup with sweetness and acidity in harmony.',
+        'sweetness-light':'A cup leaning gently toward sweetness.',
+        'acidity-light':'A cup with gentle lively acidity.',
+        'sweetness-medium':'A sweeter cup with solid balance.',
+        'acidity-medium':'A bright and refreshing cup.',
+        'sweetness-high':'A distinctly sweet cup with softer bitterness.',
+        'acidity-high':'A vibrant cup with high, sparkling acidity.'
+      };
+
+      const processMapAr = {
+        washed:'القهوة المغسولة تميل إلى الوضوح العالي والنظافة في الكوب.',
+        honey:'معالجة الهوني تعطي توازنًا جيدًا بين الحلاوة والوضوح.',
+        natural:'المعالجة المجففة تعطي حلاوة أوضح وقوامًا أغنى.'
+      };
+
+      const processMapEn = {
+        washed:'Washed coffees tend to show higher clarity and cleaner flavors.',
+        honey:'Honey process often gives a good balance of sweetness and clarity.',
+        natural:'Natural coffees usually show stronger sweetness and a richer body.'
+      };
+
+      const expectedAr = data.roast === 'light'
+        ? 'كوب نظيف يبرز الطابع الأصلي والحموضة المركبة.'
+        : 'كوب أكثر توازنًا مع حلاوة ألطف وقوام مستدير.';
+
+      const expectedEn = data.roast === 'light'
+        ? 'A cleaner brew highlighting origin character and layered acidity.'
+        : 'A more balanced brew with rounder sweetness and body.';
+
+      document.getElementById('analysisText').innerHTML = currentLang === 'ar'
+        ? `
+          <p><strong>${t.sensoryProfileLabel}</strong> ${flavorMapAr[data.balance]}</p>
+          <p><strong>${t.processImpactLabel}</strong> ${processMapAr[data.process]}</p>
+          <p><strong>${t.expectedCupLabel}</strong> ${expectedAr}</p>
+        `
+        : `
+          <p><strong>${t.sensoryProfileLabel}</strong> ${flavorMapEn[data.balance]}</p>
+          <p><strong>${t.processImpactLabel}</strong> ${processMapEn[data.process]}</p>
+          <p><strong>${t.expectedCupLabel}</strong> ${expectedEn}</p>
+        `;
+
+      document.getElementById('adjustmentNotes').innerHTML = currentLang === 'ar'
+        ? `
+          <p>إذا انتهى التقطير أسرع من ${data.targetTime}، اجعل الطحن أنعم قليلًا.</p>
+          <p>إذا انتهى أبطأ من ${data.targetTime}، اجعل الطحن أخشن قليلًا.</p>
+          <p>إذا كانت النتيجة مرة جدًا، خفّض الحرارة أو اجعل الطحن أخشن.</p>
+          <p>إذا كانت النتيجة حامضة جدًا، ارفع الحرارة أو اجعل الطحن أنعم.</p>
+        `
+        : `
+          <p>If the brew finishes faster than ${data.targetTime}, grind a bit finer.</p>
+          <p>If the brew runs slower than ${data.targetTime}, grind a bit coarser.</p>
+          <p>If the cup tastes too bitter, lower the temperature or grind coarser.</p>
+          <p>If the cup tastes too sour, raise the temperature or grind finer.</p>
+        `;
+    }
+
+    function resetForm() {
+      document.getElementById('coffeeWeight').value = 20;
+      document.getElementById('ratio').value = 15;
+      document.getElementById('balance').value = 'balanced';
+      document.getElementById('body').value = 'medium';
+      document.getElementById('process').value = 'washed';
+      document.getElementById('roast').value = 'light';
+      document.getElementById('results').classList.remove('active');
+    }
+
+    function fallbackCopy(text) {
+      const area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy'); } catch(e) {}
+      document.body.removeChild(area);
+    }
+
+    function copyRecipe() {
+      const raw = safeGet('lastRecipe');
+      if (!raw) return alert(translations[currentLang].needRecipeFirst);
+      const data = JSON.parse(raw);
+
+      const text = currentLang === 'ar'
+        ? `وصفة V60\nالبن: ${data.coffeeWeight}g\nالماء: ${data.totalWater}ml\nالريشو: 1:${data.ratio}\nالحرارة: ${data.temp}°C\nالطحن: ${data.grindSize}\nالزمن: ${data.targetTime}`
+        : `V60 Recipe\nCoffee: ${data.coffeeWeight}g\nWater: ${data.totalWater}ml\nRatio: 1:${data.ratio}\nTemp: ${data.temp}°C\nGrind: ${data.grindSize}\nTime: ${data.targetTime}`;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(() => alert(translations[currentLang].copySuccess))
+          .catch(() => { fallbackCopy(text); alert(translations[currentLang].copySuccess); });
+      } else {
+        fallbackCopy(text);
+        alert(translations[currentLang].copySuccess);
+      }
+    }
+
+    function downloadRecipe() {
+      const raw = safeGet('lastRecipe');
+      if (!raw) return alert(translations[currentLang].needRecipeFirst);
+      const blob = new Blob([raw], { type:'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'tetsu-v60-recipe.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function saveFavorite() {
+      const raw = safeGet('lastRecipe');
+      if (!raw) return alert(translations[currentLang].needRecipeFirst);
+      const data = JSON.parse(raw);
+
+      let favorites = [];
+      try { favorites = JSON.parse(safeGet('favoriteRecipes','[]')) || []; } catch(e) {}
+
+      const exists = favorites.some(f =>
+        f.coffeeWeight === data.coffeeWeight &&
+        f.ratio === data.ratio &&
+        f.balance === data.balance &&
+        f.body === data.body &&
+        f.process === data.process &&
+        f.roast === data.roast
+      );
+
+      if (exists) return alert(translations[currentLang].favExists);
+
+      favorites.push({
+        id: Date.now(),
+        title: `${data.coffeeWeight}g | 1:${data.ratio} | ${data.process} | ${data.roast}`,
+        ...data
+      });
+
+      safeSet('favoriteRecipes', JSON.stringify(favorites));
+      alert(translations[currentLang].favSaved);
+      renderFavorites();
+    }
+
+    function renderFavorites() {
+      const t = translations[currentLang];
+      let favorites = [];
+      try { favorites = JSON.parse(safeGet('favoriteRecipes','[]')) || []; } catch(e) {}
+
+      const card = document.getElementById('favoritesCard');
+      const list = document.getElementById('favoritesList');
+
+      if (!favorites.length) {
+        card.style.display = 'none';
+        list.innerHTML = '';
+        return;
+      }
+
+      card.style.display = 'block';
+      list.innerHTML = favorites.map(f => `
+        <div class="favorite-item">
+          <div>
+            <div class="favorite-title">${f.title}</div>
+            <div class="favorite-sub">${f.coffeeWeight}g • 1:${f.ratio} • ${f.process} • ${f.roast}</div>
+          </div>
+          <div>
+            <button class="mini-btn mini-load" onclick="loadFavorite(${f.id})">${t.loadText}</button>
+            <button class="mini-btn mini-del" onclick="deleteFavorite(${f.id})">${t.deleteText}</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadFavorite(id) {
+      let favorites = [];
+      try { favorites = JSON.parse(safeGet('favoriteRecipes','[]')) || []; } catch(e) {}
+      const f = favorites.find(x => x.id === id);
+      if (!f) return;
+
+      document.getElementById('coffeeWeight').value = f.coffeeWeight;
+      document.getElementById('ratio').value = f.ratio;
+      document.getElementById('balance').value = f.balance;
+      document.getElementById('body').value = f.body;
+      document.getElementById('process').value = f.process;
+      document.getElementById('roast').value = f.roast;
+
+      calculateRecipe();
+    }
+
+    function deleteFavorite(id) {
+      let favorites = [];
+      try { favorites = JSON.parse(safeGet('favoriteRecipes','[]')) || []; } catch(e) {}
+      favorites = favorites.filter(f => f.id !== id);
+      safeSet('favoriteRecipes', JSON.stringify(favorites));
+      renderFavorites();
+    }
+
+    function applyTranslations(lang) {
+      currentLang = lang;
+      const t = translations[lang];
+
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+      document.getElementById('mainTitle').innerHTML = t.title.includes('span')
+        ? t.title
+        : '☕ <span class="linkish" onclick="openModal()">Tetsu Kasuya</span> V60 Brew Calculator';
+
+      document.getElementById('subtitle').textContent = t.subtitle;
+      document.getElementById('devLine').innerHTML = `<strong style="color:var(--accent)">${t.developedByLabel}</strong> ${t.developedByName}`;
+      document.getElementById('snapLine').innerHTML = `<strong style="color:var(--accent)">${t.snapchatLabel}</strong> ${t.snapchatUser}`;
+      document.getElementById('langBtn').textContent = t.langToggle;
+
+      document.getElementById('settingsTitle').textContent = t.settingsTitle;
+      document.getElementById('coffeeWeightLabel').textContent = t.coffeeWeightLabel;
+      document.getElementById('ratioLabel').textContent = t.ratioLabel;
+      document.getElementById('balanceLabel').textContent = t.balanceLabel;
+      document.getElementById('bodyLabel').textContent = t.bodyLabel;
+      document.getElementById('processLabel').textContent = t.processLabel;
+      document.getElementById('roastLabel').textContent = t.roastLabel;
+      document.getElementById('calcButton').textContent = t.calcButton;
+
+      document.getElementById('summaryTitle').textContent = t.summaryTitle;
+      document.getElementById('poursTitle').textContent = t.poursTitle;
+      document.getElementById('sensoryTitle').textContent = t.sensoryTitle;
+      document.getElementById('adjustTitle').textContent = t.adjustTitle;
+      document.getElementById('favoritesTitle').textContent = t.favoritesTitle;
+      document.getElementById('resetButton').textContent = t.btnReset;
+      document.getElementById('copyButton').textContent = t.btnCopy;
+      document.getElementById('downloadButton').textContent = t.btnDownload;
+      document.getElementById('favoriteButton').textContent = t.btnFavorite;
+
+      document.getElementById('philosophyTitle').textContent = t.philosophyTitle;
+      document.getElementById('philosophy40').textContent = t.philosophy40;
+      document.getElementById('philosophy40Text').textContent = t.philosophy40Text;
+      document.getElementById('philosophy60').textContent = t.philosophy60;
+      document.getElementById('philosophy60Text').textContent = t.philosophy60Text;
+      document.getElementById('philosophyBalance').textContent = t.philosophyBalance;
+      document.getElementById('philosophyBalanceText').textContent = t.philosophyBalanceText;
+
+      for (const opt of document.getElementById('balance').options) opt.textContent = t.balanceOptions[opt.value];
+      for (const opt of document.getElementById('body').options) opt.textContent = t.bodyOptions[opt.value];
+      for (const opt of document.getElementById('process').options) opt.textContent = t.processOptions[opt.value];
+      for (const opt of document.getElementById('roast').options) opt.textContent = t.roastOptions[opt.value];
+
+      document.getElementById('modalTitle').textContent = t.modalTitle;
+      document.getElementById('modalBody').innerHTML = t.modalHtml;
+
+      safeSet('preferredLanguage', lang);
+      renderFavorites();
+
+      const raw = safeGet('lastRecipe');
+      if (raw && document.getElementById('results').classList.contains('active')) {
+        displayResults(JSON.parse(raw));
+      }
+    }
+
+    function toggleLang() {
+      applyTranslations(currentLang === 'ar' ? 'en' : 'ar');
+    }
+
+    function openModal() {
+      document.getElementById('modalBackdrop').classList.add('active');
+      document.getElementById('aboutModal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('active');
+      document.getElementById('aboutModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedLang = safeGet('preferredLanguage', 'ar') || 'ar';
+      applyTranslations(savedLang);
+      renderFavorites();
+    });
+  </script>
+</body>
+</html>
