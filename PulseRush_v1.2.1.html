@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseRush v1.2.1</title>
+  <style>
+    :root {
+      --bg1: #0a0d11;
+      --bg2: #10161d;
+      --panel: rgba(18, 22, 28, 0.94);
+      --line: rgba(255,255,255,0.06);
+      --cell: #1d2530;
+      --cell-line: #2d3947;
+      --active: #7af4cb;
+      --active-2: #4ed8ab;
+      --text: #f2f5f7;
+      --muted: #9ba7b4;
+      --danger: #ff6b6b;
+      --success: #7af4cb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.05), transparent 30%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+
+    .app {
+      width: min(100%, 430px);
+      border-radius: 28px;
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      transition: transform 0.12s ease;
+    }
+
+    .app.shake {
+      animation: shake 0.18s linear 1;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 14px 16px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .status {
+      min-height: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 6px 0 14px;
+    }
+
+    .combo {
+      min-height: 24px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--success);
+      margin-bottom: 10px;
+      opacity: 0;
+      transform: scale(0.94);
+      transition: all 0.12s ease;
+    }
+
+    .combo.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      user-select: none;
+      touch-action: manipulation;
+      margin-bottom: 18px;
+    }
+
+    .cell {
+      aspect-ratio: 1/1;
+      border-radius: 22px;
+      border: 1px solid var(--cell-line);
+      background: linear-gradient(180deg, #202833, #171d25);
+      transition: transform 0.10s ease, box-shadow 0.10s ease, background 0.10s ease, border-color 0.10s ease, opacity 0.10s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cell.active {
+      transform: scale(1.06);
+      border-color: #9df8dc;
+      background: linear-gradient(180deg, var(--active), var(--active-2));
+      box-shadow: 0 0 0 7px rgba(122,244,203,0.16), 0 10px 26px rgba(78,216,171,0.18);
+    }
+
+    .cell.hit {
+      transform: scale(0.94);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.26);
+      opacity: 0.92;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    button.control {
+      flex: 1;
+      border: none;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--text);
+      color: #0b0f13;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .footer {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .danger { color: var(--danger); }
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="topbar">
+      <div class="box">
+        <div class="label">النقاط الحالية</div>
+        <div class="value" id="score">0</div>
+      </div>
+      <div class="box">
+        <div class="label">أفضل نتيجة</div>
+        <div class="value" id="best">0</div>
+      </div>
+    </div>
+
+    <div class="status" id="status">ابدأ ثم المس المربعين المضيئين بسرعة</div>
+    <div class="combo" id="combo">COMBO x2</div>
+
+    <section class="grid" id="grid"></section>
+
+    <div class="controls">
+      <button class="control primary" id="startBtn">ابدأ / إعادة اللعب</button>
+      <button class="control secondary" id="resetBtn">تصفير الأفضل</button>
+    </div>
+
+    <div class="footer">
+      <div>الإصدار: 1.2.1</div>
+      <div>آخر تحديث: 2026-03-17</div>
+    </div>
+  </main>
+
+<script>
+const app = document.getElementById('app');
+const gridEl = document.getElementById('grid');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const statusEl = document.getElementById('status');
+const comboEl = document.getElementById('combo');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+const GRID_SIZE = 9;
+const START_SPEED = 1050;
+const MIN_SPEED = 320;
+const SPEED_MULTIPLIER = 0.95;
+const HIT_WINDOW = 280;
+const ROUND_GAP = 120;
+
+let cells = [];
+let activeIndices = [];
+let tappedIndices = [];
+let playing = false;
+let score = 0;
+let combo = 0;
+let best = Number(localStorage.getItem('pulserush_best_v121') || 0);
+let speed = START_SPEED;
+let firstTapTime = 0;
+let hideTimer = null;
+let comboTimer = null;
+let audioCtx = null;
+
+bestEl.textContent = best;
+
+for (let i = 0; i < GRID_SIZE; i++) {
+  const cell = document.createElement('button');
+  cell.className = 'cell';
+  cell.type = 'button';
+  cell.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handleTap(i);
+  });
+  gridEl.appendChild(cell);
+  cells.push(cell);
+}
+
+function ensureAudio() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+
+function beep(freq = 660, duration = 0.05, type = 'sine', volume = 0.025) {
+  try {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = volume;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+function updateScore() {
+  scoreEl.textContent = score;
+  bestEl.textContent = best;
+}
+
+function clearVisuals() {
+  cells.forEach(c => c.classList.remove('active', 'hit'));
+}
+
+function pickTwo() {
+  const arr = [];
+  while (arr.length < 2) {
+    const n = Math.floor(Math.random() * GRID_SIZE);
+    if (!arr.includes(n)) arr.push(n);
+  }
+  return arr;
+}
+
+function showCombo() {
+  if (combo < 2) {
+    comboEl.classList.remove('show');
+    return;
+  }
+  comboEl.textContent = `COMBO x${combo}`;
+  comboEl.classList.add('show');
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(() => comboEl.classList.remove('show'), 320);
+}
+
+function showTargets() {
+  clearVisuals();
+  tappedIndices = [];
+  firstTapTime = 0;
+  activeIndices = pickTwo();
+  activeIndices.forEach(i => cells[i].classList.add('active'));
+  statusEl.textContent = 'اضغط الهدفين الآن';
+  beep(600, 0.04, 'sine', 0.02);
+
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    if (playing && tappedIndices.length < 2) {
+      endGame('تأخرت عن النبضة');
+    }
+  }, speed);
+}
+
+function nextRound() {
+  if (!playing) return;
+  speed = Math.max(MIN_SPEED, Math.round(speed * SPEED_MULTIPLIER));
+  setTimeout(showTargets, ROUND_GAP);
+}
+
+function startGame() {
+  ensureAudio();
+  clearTimeout(hideTimer);
+  clearTimeout(comboTimer);
+  playing = true;
+  score = 0;
+  combo = 0;
+  speed = START_SPEED;
+  tappedIndices = [];
+  activeIndices = [];
+  firstTapTime = 0;
+  comboEl.classList.remove('show');
+  clearVisuals();
+  updateScore();
+  statusEl.textContent = 'استعد';
+  setTimeout(() => { if (playing) showTargets(); }, 250);
+}
+
+function saveBest() {
+  localStorage.setItem('pulserush_best_v121', String(best));
+}
+
+function endGame(reason) {
+  playing = false;
+  clearTimeout(hideTimer);
+  clearVisuals();
+  combo = 0;
+  comboEl.classList.remove('show');
+
+  if (score > best) {
+    best = score;
+    saveBest();
+  }
+  updateScore();
+  statusEl.innerHTML = `<span class="danger">انتهت الجولة</span> — السبب: ${reason}`;
+  beep(180, 0.16, 'sawtooth', 0.045);
+  vibrate(70);
+  app.classList.remove('shake');
+  void app.offsetWidth;
+  app.classList.add('shake');
+}
+
+function handleTap(index) {
+  if (!playing) return;
+
+  if (!activeIndices.includes(index)) {
+    endGame('ضغطت هدفًا خاطئًا');
+    return;
+  }
+
+  if (tappedIndices.includes(index)) {
+    endGame('كررت الضغط على نفس الهدف');
+    return;
+  }
+
+  cells[index].classList.add('hit');
+  tappedIndices.push(index);
+  beep(860, 0.035, 'triangle', 0.02);
+  vibrate(14);
+
+  const now = performance.now();
+  if (tappedIndices.length === 1) {
+    firstTapTime = now;
+    return;
+  }
+
+  if ((now - firstTapTime) > HIT_WINDOW) {
+    endGame('الفارق بين الإصبعين كان متأخرًا');
+    return;
+  }
+
+  score += 1;
+  combo += 1;
+  updateScore();
+  showCombo();
+  statusEl.textContent = combo >= 2 ? 'ممتاز، استمر' : 'نجاح';
+  clearTimeout(hideTimer);
+  setTimeout(nextRound, 70);
+}
+
+startBtn.addEventListener('click', startGame);
+resetBtn.addEventListener('click', () => {
+  best = 0;
+  saveBest();
+  updateScore();
+  statusEl.textContent = 'تم تصفير أفضل نتيجة';
+});
+</script>
+</body>
+</html>
