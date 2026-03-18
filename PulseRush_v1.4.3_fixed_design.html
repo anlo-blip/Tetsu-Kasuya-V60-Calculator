@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseRush v1.4.3</title>
+  <style>
+    :root {
+      --bg-top: #07111f;
+      --bg-bottom: #05070d;
+      --panel: rgba(8, 12, 22, 0.96);
+      --panel-border: rgba(255, 255, 255, 0.05);
+      --card: linear-gradient(180deg, #162235 0%, #101827 100%);
+      --card-border: rgba(120, 170, 255, 0.12);
+      --grid-tile: linear-gradient(180deg, #172235 0%, #111827 100%);
+      --grid-border: rgba(120, 170, 255, 0.12);
+      --active-1: #31efd0;
+      --active-2: #16d9b8;
+      --text: #f3f6fb;
+      --muted: #a5afbf;
+      --danger: #ff7c7c;
+      --success: #71f2c6;
+      --warning: #ffd166;
+      --button-dark: #1a2333;
+      --button-light: #f5f5f7;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(120,170,255,0.08), transparent 28%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+    }
+
+    .shell {
+      width: min(100%, 430px);
+      border-radius: 34px;
+      background: rgba(5, 10, 18, 0.92);
+      padding: 26px 22px 22px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 34px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      pointer-events: none;
+    }
+
+    .progress-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+      background: radial-gradient(circle at center, rgba(49,239,208,0.10), transparent 56%);
+    }
+
+    .progress-glow.show-1 { opacity: 1; }
+    .progress-glow.show-2 { opacity: 1; background: radial-gradient(circle at center, rgba(255,209,102,0.11), transparent 56%); }
+
+    .pulse-ring {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 34px;
+    }
+
+    .pulse-ring.animate-1 { animation: shellPulse 0.65s ease; }
+    .pulse-ring.animate-2 { animation: shellPulseStrong 0.7s ease; }
+
+    @keyframes shellPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(49,239,208,0.00); }
+      30%  { box-shadow: 0 0 0 12px rgba(49,239,208,0.14); }
+      100% { box-shadow: 0 0 0 28px rgba(49,239,208,0.00); }
+    }
+
+    @keyframes shellPulseStrong {
+      0%   { box-shadow: 0 0 0 0 rgba(255,209,102,0.00); }
+      30%  { box-shadow: 0 0 0 14px rgba(255,209,102,0.16); }
+      100% { box-shadow: 0 0 0 34px rgba(255,209,102,0.00); }
+    }
+
+    .shell.shake { animation: shake 0.18s linear 1; }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      min-height: 128px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    }
+
+    .info-label {
+      color: #d8deea;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .info-value {
+      font-size: 60px;
+      line-height: 1;
+      font-weight: 800;
+      color: #ffffff;
+      transition: color 0.15s ease, transform 0.15s ease;
+      text-align: center;
+    }
+
+    .info-value.near {
+      color: var(--warning);
+      transform: scale(1.04);
+    }
+
+    .message {
+      min-height: 44px;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 18px;
+      color: #dce3ef;
+      line-height: 1.6;
+    }
+
+    .message .danger { color: var(--danger); font-weight: 700; }
+    .message .success { color: var(--success); font-weight: 700; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .cell {
+      aspect-ratio: 1 / 1;
+      border-radius: 26px;
+      background: var(--grid-tile);
+      border: 1px solid var(--grid-border);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+      transition:
+        transform 0.10s ease,
+        box-shadow 0.10s ease,
+        filter 0.10s ease,
+        opacity 0.10s ease,
+        background 0.10s ease,
+        border-color 0.10s ease;
+      -webkit-tap-highlight-color: transparent;
+      padding: 0;
+    }
+
+    .cell.active {
+      background: linear-gradient(180deg, var(--active-1) 0%, var(--active-2) 100%);
+      border-color: rgba(255,255,255,0.22);
+      transform: scale(1.03);
+      box-shadow:
+        0 0 0 8px rgba(49, 239, 208, 0.12),
+        0 10px 24px rgba(22, 217, 184, 0.14);
+    }
+
+    .cell.hit {
+      transform: scale(0.95);
+      opacity: 0.92;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.22);
+    }
+
+    .cell.intense {
+      filter: saturate(1.06) brightness(1.02);
+      box-shadow:
+        0 0 0 9px rgba(49, 239, 208, 0.16),
+        0 12px 28px rgba(22, 217, 184, 0.18);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 28px;
+      padding: 22px 16px;
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1.35;
+      cursor: pointer;
+      transition: transform 0.10s ease, filter 0.10s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-dark {
+      background: var(--button-dark);
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .btn-light {
+      background: var(--button-light);
+      color: #0a0e15;
+    }
+
+    .footer {
+      text-align: center;
+      color: #c9d0dc;
+      font-size: 18px;
+      line-height: 1.9;
+      opacity: 0.95;
+    }
+
+    .mini-toast {
+      position: absolute;
+      top: 210px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.96);
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(15, 22, 34, 0.86);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.18s ease;
+    }
+
+    .mini-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+  </style>
+</head>
+<body>
+  <main class="shell" id="shell">
+    <div class="progress-glow" id="progressGlow"></div>
+    <div class="pulse-ring" id="pulseRing"></div>
+
+    <section class="topbar">
+      <div class="info-card">
+        <div class="info-label">أفضل نتيجة</div>
+        <div class="info-value" id="bestScore">0</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">النقاط الحالية</div>
+        <div class="info-value" id="currentScore">0</div>
+      </div>
+    </section>
+
+    <div class="message" id="message">ابدأ الجولة ثم المس المربعين المضيئين بسرعة</div>
+
+    <section class="grid" id="grid"></section>
+
+    <section class="controls">
+      <button class="btn btn-dark" id="resetBtn">تصفير الأفضل</button>
+      <button class="btn btn-light" id="startBtn">ابدأ / إعادة<br>اللعب</button>
+    </section>
+
+    <div class="footer">
+      الإصدار: 1.4.3<br>
+      آخر تحديث: 18-03-2026
+    </div>
+
+    <div class="mini-toast" id="miniToast">🎁 إنجاز جديد!</div>
+  </main>
+
+<script>
+const shell = document.getElementById('shell');
+const gridEl = document.getElementById('grid');
+const bestScoreEl = document.getElementById('bestScore');
+const currentScoreEl = document.getElementById('currentScore');
+const messageEl = document.getElementById('message');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const miniToast = document.getElementById('miniToast');
+const progressGlow = document.getElementById('progressGlow');
+const pulseRing = document.getElementById('pulseRing');
+
+const GRID_SIZE = 9;
+const START_SPEED = 1050;
+const MIN_SPEED = 320;
+const HIT_WINDOW = 280;
+const ROUND_GAP = 120;
+
+const SPEED_STAGES = [
+  { score: 0, speed: 1050, label: '' },
+  { score: 4, speed: 930, label: '⚡ أسرع شوي' },
+  { score: 8, speed: 800, label: '⚡ دخلت الضغط' },
+  { score: 12, speed: 690, label: '🔥 انتبه' },
+  { score: 16, speed: 590, label: '🔥 سرعة عالية' },
+  { score: 21, speed: 500, label: '🚨 قربت للحد' },
+  { score: 27, speed: 420, label: '🚨 ضغط شديد' },
+  { score: 34, speed: 360, label: '💀 وضع خطير' },
+];
+
+let cells = [];
+let activeIndices = [];
+let tappedIndices = [];
+let playing = false;
+let score = 0;
+let best = Number(localStorage.getItem('pulserush_best_v143') || 0);
+let speed = START_SPEED;
+let firstTapTime = 0;
+let hideTimer = null;
+let roundId = 0;
+let latestStageIndex = 0;
+let combo = 0;
+let comboTimer = null;
+let audioCtx = null;
+
+bestScoreEl.textContent = best;
+
+for (let i = 0; i < GRID_SIZE; i++) {
+  const cell = document.createElement('button');
+  cell.className = 'cell';
+  cell.type = 'button';
+  cell.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handleTap(i);
+  });
+  gridEl.appendChild(cell);
+  cells.push(cell);
+}
+
+function ensureAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+
+function beep(freq = 660, duration = 0.05, type = 'sine', volume = 0.025) {
+  try {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = volume;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+function showToast(text) {
+  miniToast.textContent = text;
+  miniToast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => miniToast.classList.remove('show'), 850);
+}
+
+function triggerProgressFX(level) {
+  progressGlow.className = 'progress-glow';
+  pulseRing.className = 'pulse-ring';
+  void progressGlow.offsetWidth;
+  progressGlow.classList.add(level === 1 ? 'show-1' : 'show-2');
+  pulseRing.classList.add(level === 1 ? 'animate-1' : 'animate-2');
+
+  clearTimeout(triggerProgressFX.timer);
+  triggerProgressFX.timer = setTimeout(() => {
+    progressGlow.className = 'progress-glow';
+    pulseRing.className = 'pulse-ring';
+  }, 760);
+}
+
+function updateScore() {
+  currentScoreEl.textContent = score;
+  bestScoreEl.textContent = best;
+  const near = best > 0 && score >= best - 2;
+  currentScoreEl.classList.toggle('near', near);
+}
+
+function clearVisuals() {
+  cells.forEach(cell => cell.classList.remove('active', 'hit', 'intense'));
+}
+
+function pickTwo() {
+  const arr = [];
+  while (arr.length < 2) {
+    const n = Math.floor(Math.random() * GRID_SIZE);
+    if (!arr.includes(n)) arr.push(n);
+  }
+  return arr;
+}
+
+function getStageIndex(currentScore) {
+  let idx = 0;
+  for (let i = 0; i < SPEED_STAGES.length; i++) {
+    if (currentScore >= SPEED_STAGES[i].score) idx = i;
+  }
+  return idx;
+}
+
+function applyStageEffects() {
+  const stageIndex = getStageIndex(score);
+  speed = Math.max(MIN_SPEED, SPEED_STAGES[stageIndex].speed);
+
+  const intense = stageIndex >= 3;
+  activeIndices.forEach(i => {
+    if (intense) cells[i].classList.add('intense');
+  });
+
+  if (stageIndex > latestStageIndex) {
+    latestStageIndex = stageIndex;
+    const label = SPEED_STAGES[stageIndex].label;
+    if (label) {
+      messageEl.textContent = label;
+      beep(760 + stageIndex * 30, 0.05, 'triangle', 0.025);
+      vibrate(22);
+    }
+  }
+}
+
+function showTargets() {
+  if (!playing) return;
+
+  roundId += 1;
+  const thisRound = roundId;
+
+  clearVisuals();
+  tappedIndices = [];
+  firstTapTime = 0;
+  activeIndices = pickTwo();
+  activeIndices.forEach(i => cells[i].classList.add('active'));
+
+  applyStageEffects();
+
+  const stageIndex = getStageIndex(score);
+  beep(600 + stageIndex * 35, 0.04, 'sine', 0.02);
+
+  if (best > 0 && score >= best - 2) {
+    messageEl.innerHTML = '<span class="success">🔥 قريب من رقمك!</span>';
+  } else if (SPEED_STAGES[stageIndex].label) {
+    messageEl.textContent = SPEED_STAGES[stageIndex].label;
+  } else {
+    messageEl.textContent = 'اضغط الهدفين الآن';
+  }
+
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    if (!playing || thisRound !== roundId) return;
+
+    if (tappedIndices.length === 0) {
+      endGame('ما ضغطت الهدفين!');
+    } else if (tappedIndices.length === 1) {
+      endGame('ما ضغطهم مع بعض!');
+    }
+  }, speed);
+}
+
+function nextRound() {
+  if (!playing) return;
+  setTimeout(showTargets, ROUND_GAP);
+}
+
+function startGame() {
+  ensureAudio();
+  clearTimeout(hideTimer);
+  clearTimeout(comboTimer);
+  playing = true;
+  score = 0;
+  combo = 0;
+  speed = START_SPEED;
+  activeIndices = [];
+  tappedIndices = [];
+  firstTapTime = 0;
+  roundId = 0;
+  latestStageIndex = 0;
+  clearVisuals();
+  updateScore();
+  messageEl.textContent = 'استعد';
+  setTimeout(() => { if (playing) showTargets(); }, 250);
+}
+
+function saveBest() {
+  localStorage.setItem('pulserush_best_v143', String(best));
+}
+
+function endGame(reason) {
+  playing = false;
+  clearTimeout(hideTimer);
+  clearVisuals();
+
+  const previousBest = best;
+  if (score > best) {
+    best = score;
+    saveBest();
+  }
+
+  updateScore();
+
+  if (score > previousBest) {
+    messageEl.innerHTML = '<span class="success">🏆 رقم جديد!</span>';
+  } else if (previousBest > 0 && score >= previousBest - 2) {
+    messageEl.innerHTML = `<span class="danger">💥 كنت قريب جدًا!</span> — السبب: ${reason}`;
+  } else {
+    messageEl.innerHTML = `<span class="danger">انتهت الجولة</span> — السبب: ${reason}`;
+  }
+
+  beep(180, 0.16, 'sawtooth', 0.045);
+  vibrate(70);
+  shell.classList.remove('shake');
+  void shell.offsetWidth;
+  shell.classList.add('shake');
+}
+
+function handleTap(index) {
+  if (!playing) return;
+
+  if (!activeIndices.includes(index)) {
+    endGame('ضغطت مربع غلط!');
+    return;
+  }
+
+  if (tappedIndices.includes(index)) {
+    endGame('ضغطت مربع غلط!');
+    return;
+  }
+
+  cells[index].classList.add('hit');
+  tappedIndices.push(index);
+  beep(860, 0.035, 'triangle', 0.02);
+  vibrate(14);
+
+  const now = performance.now();
+
+  if (tappedIndices.length === 1) {
+    firstTapTime = now;
+    return;
+  }
+
+  if ((now - firstTapTime) > HIT_WINDOW) {
+    endGame('انتهى الوقت .. خلك أسرع!');
+    return;
+  }
+
+  score += 1;
+  combo += 1;
+  updateScore();
+
+  if (score === 20) {
+    triggerProgressFX(1);
+    showToast('🎁 إنجاز جديد!');
+    messageEl.innerHTML = '<span class="success">🎁 إنجاز جديد!</span>';
+    beep(980, 0.08, 'triangle', 0.03);
+    vibrate(34);
+  }
+
+  if (score === 40) {
+    triggerProgressFX(2);
+    showToast('🎁 مستوى متقدم!');
+    messageEl.innerHTML = '<span class="success">🎁 مستوى متقدم!</span>';
+    beep(1080, 0.09, 'triangle', 0.032);
+    vibrate(46);
+  }
+
+  clearTimeout(hideTimer);
+  setTimeout(nextRound, 70);
+}
+
+startBtn.addEventListener('click', startGame);
+resetBtn.addEventListener('click', () => {
+  best = 0;
+  saveBest();
+  updateScore();
+  messageEl.textContent = 'تم تصفير الأفضل';
+});
+</script>
+</body>
+</html>
