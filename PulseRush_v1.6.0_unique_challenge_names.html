@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PulseRush v1.6.0</title>
+  <style>
+    :root {
+      --bg1: #0a0d11;
+      --bg2: #10161d;
+      --panel: rgba(18, 22, 28, 0.94);
+      --line: rgba(255,255,255,0.06);
+      --cell-line: #2d3947;
+      --active: #7af4cb;
+      --active-2: #4ed8ab;
+      --text: #f2f5f7;
+      --muted: #9ba7b4;
+      --danger: #ff6b6b;
+      --success: #7af4cb;
+      --warning: #ffd166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, rgba(255,255,255,0.05), transparent 30%),
+        linear-gradient(180deg, var(--bg2), var(--bg1));
+    }
+
+    .app {
+      width: min(100%, 430px);
+      border-radius: 28px;
+      padding: 22px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 28px 80px rgba(0,0,0,0.45);
+      backdrop-filter: blur(10px);
+      transition: transform 0.12s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app.shake {
+      animation: shake 0.18s linear 1;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-3px); }
+      100% { transform: translateX(0); }
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 14px 16px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      transition: color 0.12s ease, transform 0.12s ease;
+    }
+
+    .value.near {
+      color: var(--warning);
+      transform: scale(1.04);
+    }
+
+    .status {
+      min-height: 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 6px 0 14px;
+    }
+
+    .combo {
+      min-height: 24px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--success);
+      margin-bottom: 10px;
+      opacity: 0;
+      transform: scale(0.94);
+      transition: all 0.12s ease;
+    }
+
+    .combo.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      user-select: none;
+      touch-action: manipulation;
+      margin-bottom: 18px;
+    }
+
+    .cell {
+      aspect-ratio: 1/1;
+      border-radius: 22px;
+      border: 1px solid var(--cell-line);
+      background: linear-gradient(180deg, #202833, #171d25);
+      transition:
+        transform 0.10s ease,
+        box-shadow 0.10s ease,
+        background 0.10s ease,
+        border-color 0.10s ease,
+        opacity 0.10s ease,
+        filter 0.10s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cell.active {
+      transform: scale(1.06);
+      border-color: #9df8dc;
+      background: linear-gradient(180deg, var(--active), var(--active-2));
+      box-shadow: 0 0 0 7px rgba(122,244,203,0.16), 0 10px 26px rgba(78,216,171,0.18);
+    }
+
+    .cell.hit {
+      transform: scale(0.94);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.26);
+      opacity: 0.92;
+    }
+
+    .cell.intense {
+      filter: saturate(1.08) brightness(1.04);
+      box-shadow: 0 0 0 9px rgba(122,244,203,0.20), 0 12px 30px rgba(78,216,171,0.22);
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    button.control {
+      flex: 1;
+      border: none;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: var(--text);
+      color: #0b0f13;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .footer {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .danger { color: var(--danger); }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 10, 14, 0.84);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .overlay.show {
+      display: flex;
+      z-index: 10;
+    }
+
+    .result-card {
+      width: 100%;
+      background: rgba(18,22,28,0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.40);
+    }
+
+    .result-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .result-sub {
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .result-score {
+      font-size: 34px;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+
+    .result-meta {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+      line-height: 1.8;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .result-actions button {
+      flex: 1;
+      border: none;
+      border-radius: 16px;
+      padding: 14px 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .progress-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.45s ease;
+      background: radial-gradient(circle at center, rgba(122,244,203,0.10), transparent 58%);
+    }
+
+    .progress-glow.show-1 { opacity: 1; }
+    .progress-glow.show-2 {
+      opacity: 1;
+      background: radial-gradient(circle at center, rgba(255,209,102,0.11), transparent 58%);
+    }
+
+    .pulse-ring {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: 28px;
+    }
+
+    .pulse-ring.animate-1 { animation: shellPulse 0.65s ease; }
+    .pulse-ring.animate-2 { animation: shellPulseStrong 0.7s ease; }
+
+    @keyframes shellPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(122,244,203,0); }
+      30%  { box-shadow: 0 0 0 12px rgba(122,244,203,0.14); }
+      100% { box-shadow: 0 0 0 28px rgba(122,244,203,0); }
+    }
+
+    @keyframes shellPulseStrong {
+      0%   { box-shadow: 0 0 0 0 rgba(255,209,102,0); }
+      30%  { box-shadow: 0 0 0 14px rgba(255,209,102,0.16); }
+      100% { box-shadow: 0 0 0 34px rgba(255,209,102,0); }
+    }
+
+    .mini-toast {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.96);
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: rgba(15,22,34,0.88);
+      border: 1px solid rgba(255,255,255,0.06);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.18s ease;
+      z-index: 3;
+      white-space: nowrap;
+    }
+
+    .mini-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+
+    .topbar {
+      position: relative;
+    }
+
+    .leaderboard-trigger {
+  position:absolute;
+  top:-6px;
+  left:50%;
+  transform:translateX(-50%);
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  z-index:5;
+}
+
+    .leaderboard-trigger:active {
+      filter: brightness(1.06);
+}
+
+    .top5-card {
+      width: 100%;
+      background: rgba(18,22,28,0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.40);
+    }
+
+    .top5-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .top5-list {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 14px 16px;
+      text-align: right;
+      line-height: 2;
+      color: #f3f5f7;
+      margin-bottom: 16px;
+      min-height: 140px;
+    }
+
+    .top5-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 16px;
+    }
+
+    .top5-rank {
+      color: #cfd6e6;
+      font-weight: 700;
+    }
+
+    .top5-score {
+      color: #ffffff;
+      font-weight: 800;
+    }
+
+    .result-extra-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .result-extra-actions button {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+
+    .challenge-trigger {
+  position:absolute;
+  top:48px;
+  left:50%;
+  transform:translateX(-50%);
+  width:42px;
+  height:42px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  z-index:5;
+}
+
+    .challenge-trigger:active {
+      filter: brightness(1.06);
+}
+
+    @keyframes challengePulse {
+      0%, 100% { box-shadow: 0 0 0 6px rgba(122,244,203,0.05), 0 8px 18px rgba(0,0,0,0.22); }
+      50% { box-shadow: 0 0 0 9px rgba(122,244,203,0.10), 0 10px 22px rgba(0,0,0,0.26); }
+    }
+
+    .challenge-card {
+      width: 100%;
+      background: rgba(18,22,28,0.96);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 24px;
+      padding: 22px 18px 18px;
+      text-align: center;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.40);
+    }
+
+    .challenge-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .challenge-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+      line-height: 1.7;
+    }
+
+    .challenge-input {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 14px;
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 14px;
+    }
+
+    .challenge-session-list {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 18px;
+      padding: 12px 14px;
+      text-align: right;
+      line-height: 1.9;
+      color: #f3f5f7;
+      margin-top: 14px;
+      min-height: 120px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .challenge-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 15px;
+      padding: 4px 0;
+    }
+
+    .challenge-name { color: #d6deeb; font-weight: 700; }
+    .challenge-score { color: #ffffff; font-weight: 800; }
+
+    .challenge-actions-inline {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .challenge-actions-inline button {
+      flex: 1;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+
+    .challenge-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      padding: 6px 0;
+    }
+
+    .challenge-replay {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .challenge-replay:active {
+      filter: brightness(1.08);
+    }
+
+  </style>
+</head>
+<body>
+  <main class="app" id="app">
+    <div class="progress-glow" id="progressGlow"></div>
+    <div class="pulse-ring" id="pulseRing"></div>
+    <div class="mini-toast" id="miniToast">🎁 إنجاز جديد!</div>
+    <div class="topbar" style="padding-top:14px;padding-bottom:14px;">
+      <button class="leaderboard-trigger" id="leaderboardBtn" aria-label="أفضل 5">🏆</button>
+      <button class="challenge-trigger" id="challengeBtn" aria-label="جلسة تحدي">⚔️</button>
+      <div class="box">
+        <div class="label">النقاط الحالية</div>
+        <div class="value" id="score">0</div>
+      </div>
+      <div class="box" style="position:relative;">
+        <div class="label">أفضل نتيجة</div>
+        <div class="value" id="best">0</div>
+        <button id="resetBestIcon" type="button" style="
+          position:absolute;
+          top:8px;
+          left:8px;
+          width:32px;
+          height:32px;
+          border-radius:999px;
+          border:none;
+          background:rgba(255,255,255,0.08);
+          color:#fff;
+          font-size:16px;
+          cursor:pointer;
+          z-index:5;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        ">⟳</button>
+      </div>
+    </div>
+
+    <div style="height:20px;"></div>
+<div class="status" id="status" style="margin-top:6px;">ابدأ ثم المس المربعين المضيئين بسرعة</div>
+    <div class="combo" id="combo">COMBO x2</div>
+
+    <section class="grid" id="grid"></section>
+
+    <div class="controls">
+      <button class="control primary" id="startBtn">ابدأ / إعادة اللعب</button>
+      
+    </div>
+
+    <div class="footer">
+      <div>الإصدار: 1.6.0</div>
+      <div>آخر تحديث: 2026-03-18</div>
+    </div>
+
+    <div class="overlay" id="overlay">
+      <div class="result-card">
+        <div class="result-title" id="resultTitle">انتهت الجولة</div>
+        <div class="result-sub" id="resultSub"></div>
+        <div class="result-score" id="resultScore">0</div>
+        <div class="result-meta" id="resultMeta"></div>
+        <div class="result-actions">
+          <button class="primary" id="playAgainBtn">إعادة اللعب</button>
+          <button class="ghost" id="closeResultBtn">إغلاق</button>
+        </div>
+        <div class="result-extra-actions">
+          <button class="ghost" id="openTop5FromResultBtn">🏆 أفضل 5</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="top5Overlay">
+      <div class="top5-card">
+        <div class="top5-title">🏆 أفضل 5 نتائج</div>
+        <div id="rivalInOverlay" style="margin:6px 0 10px 0;color:#aab4c6;text-align:center;"></div>
+        <div class="top5-list" id="top5List"></div>
+        <div class="result-actions">
+          <button class="primary" id="closeTop5Btn">إغلاق</button>
+        </div>
+      </div>
+    </div>
+  
+
+    <div class="overlay" id="challengeOverlay">
+      <div class="challenge-card">
+        <div class="challenge-title">⚔️ جلسة تحدي</div>
+        <div class="challenge-sub">اكتب اسم لاعب جديد ثم ابدأ اللعب. يتم حفظ نتائج الجلسة (حتى 20 لاعب) للجلسة الحالية بالأسماء.</div>
+        <input class="challenge-input" id="challengeNameInput" placeholder="اكتب اسم لاعب جديد" maxlength="18" />
+        <div class="result-actions">
+          <button class="primary" id="startChallengeBtn">ابدأ الجولة</button>
+          <button class="ghost" id="closeChallengeBtn">إغلاق</button>
+        </div>
+        <div class="challenge-actions-inline">
+          <button class="ghost" id="clearChallengeSessionBtn">جلسة جديدة</button>
+        </div>
+        <div class="challenge-session-list" id="challengeSessionList"></div>
+      </div>
+    </div>
+
+    <div class="overlay" id="confirmResetOverlay">
+  <div class="result-card">
+    <div class="result-title">بدء سجل جديد؟</div>
+    <div class="result-sub">راح تنحذف أفضل نتيجة</div>
+    <div class="result-actions">
+      <button class="primary" id="confirmResetBtn">نعم، ابدأ من جديد</button>
+      <button class="ghost" id="cancelResetBtn">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+
+<canvas id="celebrationCanvas" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+z-index:20;
+"></canvas>
+</main>
+
+
+<script>
+const app = document.getElementById('app');
+const gridEl = document.getElementById('grid');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const statusEl = document.getElementById('status');
+const comboEl = document.getElementById('combo');
+const startBtn = document.getElementById('startBtn');
+
+const overlay = document.getElementById('overlay');
+const resultTitle = document.getElementById('resultTitle');
+const resultSub = document.getElementById('resultSub');
+const resultScore = document.getElementById('resultScore');
+const resultMeta = document.getElementById('resultMeta');
+const playAgainBtn = document.getElementById('playAgainBtn');
+const closeResultBtn = document.getElementById('closeResultBtn');
+const openTop5FromResultBtn = document.getElementById('openTop5FromResultBtn');
+const leaderboardBtn = document.getElementById('leaderboardBtn');
+const challengeBtn = document.getElementById('challengeBtn');
+const top5Overlay = document.getElementById('top5Overlay');
+const top5List = document.getElementById('top5List');
+const closeTop5Btn = document.getElementById('closeTop5Btn');
+const challengeOverlay = document.getElementById('challengeOverlay');
+const challengeNameInput = document.getElementById('challengeNameInput');
+const startChallengeBtn = document.getElementById('startChallengeBtn');
+const closeChallengeBtn = document.getElementById('closeChallengeBtn');
+const clearChallengeSessionBtn = document.getElementById('clearChallengeSessionBtn');
+const challengeSessionList = document.getElementById('challengeSessionList');
+const resetBestIcon = document.getElementById('resetBestIcon');
+const confirmResetOverlay = document.getElementById('confirmResetOverlay');
+const confirmResetBtn = document.getElementById('confirmResetBtn');
+const cancelResetBtn = document.getElementById('cancelResetBtn');
+const progressGlow = document.getElementById('progressGlow');
+const pulseRing = document.getElementById('pulseRing');
+const miniToast = document.getElementById('miniToast');
+
+const GRID_SIZE = 9;
+const START_SPEED = 1050;
+const MIN_SPEED = 320;
+const HIT_WINDOW = 280;
+const ROUND_GAP = 120;
+
+const SPEED_MAP = {
+  0:1100,1:1080,2:1060,3:1040,4:1020,5:1000,
+  6:990,7:980,8:970,9:960,10:950,11:940,12:930,
+  13:920,14:910,15:900,16:890,17:880,18:870,
+  19:850,20:830,21:810,22:790,23:770,24:750,
+  25:730,26:710,27:690,28:670,
+  29:640,30:610,31:580,32:550,33:520,34:500,
+  35:480,36:460,37:440,38:420,39:400,40:380
+};
+
+const STAGE_LABELS = [
+  { score: 0, label: '' },
+  { score: 6, label: 'ثقة وثبات' },
+  { score: 13, label: 'ممتاز، كمل' },
+  { score: 19, label: 'بدأ الشد' },
+  { score: 29, label: 'التحدي الحقيقي' }
+];
+
+let cells = [];
+let activeIndices = [];
+let tappedIndices = [];
+let playing = false;
+let score = 0;
+let combo = 0;
+let best = Number(localStorage.getItem('pulserush_best_v144_lb') || 0);
+let speed = START_SPEED;
+let firstTapTime = 0;
+let hideTimer = null;
+let comboTimer = null;
+let audioCtx = null;
+let leaderboard = JSON.parse(localStorage.getItem('pulserush_top5_v144_lb') || '[]');
+let challengeSession = JSON.parse(localStorage.getItem('pulserush_challenge_session_v153') || '[]');
+let currentChallengePlayer = '';
+let rival = JSON.parse(localStorage.getItem('pulserush_rival_v157') || 'null');
+let roundId = 0;
+let latestStageIndex = 0;
+
+bestEl.textContent = best;
+renderLeaderboard();
+renderChallengeSession();
+
+for (let i = 0; i < GRID_SIZE; i++) {
+  const cell = document.createElement('button');
+  cell.className = 'cell';
+  cell.type = 'button';
+  cell.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    handleTap(i);
+  });
+  gridEl.appendChild(cell);
+  cells.push(cell);
+}
+
+function ensureAudio() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) {}
+}
+
+function beep(freq = 660, duration = 0.05, type = 'sine', volume = 0.025) {
+  try {
+    ensureAudio();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.value = volume;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
+  } catch (e) {}
+}
+
+function vibrate(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+
+
+
+
+function saveRival() {
+  localStorage.setItem('pulserush_rival_v157', JSON.stringify(rival));
+}
+
+function tryUpdateRival(name, score, previousBest) {
+  if (!name) return;
+  // Only if opponent BEATS player's best
+  if (previousBest > 0 && score > previousBest) {
+    // keep the highest opponent who beat you
+    if (!rival || score > rival.score) {
+      rival = { name, score };
+      saveRival();
+    }
+  }
+}
+
+function getRivalTextForOverlay() {
+  if (!rival || !rival.name) {
+    return 'لا يوجد خصم تجاوز أفضل نتيجتك بعد';
+  }
+  return `⚔️ أقوى خصم واجهته: ${rival.name} — ${rival.score}`;
+}
+
+function saveChallengeSession() {
+  localStorage.setItem('pulserush_challenge_session_v153', JSON.stringify(challengeSession));
+}
+
+function renderChallengeSession() {
+  if (!challengeSessionList) return;
+  if (!challengeSession.length) {
+    challengeSessionList.innerHTML = '<div style="text-align:center;color:#aab4c6;">لا توجد نتائج في الجلسة بعد</div>';
+    return;
+  }
+
+  const rows = [...challengeSession]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 20)
+    .map((item, index) => `
+      <div class="challenge-row">
+        <button class="challenge-replay" type="button" data-player="${item.name.replace(/"/g, '&quot;')}">⟳</button>
+        <span class="challenge-name">#${index + 1} ${item.name}</span>
+        <span class="challenge-score">${item.score}</span>
+      </div>
+    `).join('');
+
+  challengeSessionList.innerHTML = rows;
+
+  challengeSessionList.querySelectorAll('.challenge-replay').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const playerName = btn.getAttribute('data-player') || '';
+      if (!playerName) return;
+      currentChallengePlayer = playerName;
+      if (challengeNameInput) challengeNameInput.value = playerName;
+      hideOverlay();
+      startGame();
+    });
+  });
+}
+
+function addChallengeScore(name, score) {
+  if (!name) return;
+
+  const existingIndex = challengeSession.findIndex(item => item.name === name);
+
+  if (existingIndex === -1) {
+    challengeSession.push({ name, score });
+  } else if (score > challengeSession[existingIndex].score) {
+    challengeSession[existingIndex].score = score;
+  }
+
+  challengeSession.sort((a, b) => b.score - a.score);
+  challengeSession = challengeSession.slice(0, 20);
+  saveChallengeSession();
+  renderChallengeSession();
+}
+
+function getChallengeHint(name, score) {
+  if (!name) return '';
+  const sorted = [...challengeSession].sort((a, b) => b.score - a.score).slice(0, 5);
+  const rank = sorted.findIndex(item => item.name === name && item.score === score) + 1;
+  if (rank === 1) return `⚔️ ${name} صار الأول في الجلسة`;
+  if (rank > 1 && rank <= 5) return `⚔️ ${name} دخل المركز #${rank} في الجلسة`;
+  return '';
+}
+
+function openChallenge() {
+  hideOverlay();
+  renderChallengeSession();
+  const challengeSub = document.querySelector('.challenge-sub');
+  if (challengeSub) {
+    challengeSub.textContent = 'اكتب اسم لاعب جديد أو اختر لاعبًا موجودًا للإعادة. يتم حفظ أعلى نتيجة فقط لكل لاعب داخل الجلسة.';
+  }
+  challengeOverlay.classList.add('show');
+  setTimeout(() => challengeNameInput.focus(), 60);
+}
+
+function saveLeaderboard() {
+  localStorage.setItem('pulserush_top5_v144_lb', JSON.stringify(leaderboard));
+}
+
+function updateLeaderboard(newScore = null) {
+  if (newScore !== null && Number.isFinite(newScore)) {
+    leaderboard.push(newScore);
+    leaderboard.sort((a, b) => b - a);
+    leaderboard = leaderboard.slice(0, 5);
+    saveLeaderboard();
+  }
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  if (!top5List) return;
+  if (!leaderboard.length) {
+    top5List.innerHTML = '<div style="text-align:center;color:#aab4c6;">لا توجد نتائج بعد</div>';
+    return;
+  }
+
+  top5List.innerHTML = leaderboard.map((score, index) => `
+    <div class="top5-row">
+      <span class="top5-rank">#${index + 1}</span>
+      <span class="top5-score">${score}</span>
+    </div>
+  `).join('');
+}
+
+function getLeaderboardMessage(currentScore, previousBoard) {
+  const simulated = [...previousBoard, currentScore].sort((a, b) => b - a).slice(0, 5);
+  const rank = simulated.indexOf(currentScore) + 1;
+  const isTop5 = rank > 0 && rank <= 5 && simulated.includes(currentScore);
+
+  if (!previousBoard.length) {
+    return { rank: 1, text: '🔥 أول نتيجة في أفضل 5!' };
+  }
+
+  if (isTop5) {
+    return { rank, text: `🏆 دخلت المركز #${rank}` };
+  }
+
+  const fifth = previousBoard[4];
+  if (typeof fifth === 'number') {
+    const diff = Math.max(fifth - currentScore, 0);
+    return { rank: null, text: diff === 0 ? 'قريب جدًا من التوب 5' : `قريب من التوب 5 .. باقي ${diff}` };
+  }
+
+  return { rank: null, text: '' };
+}
+
+function openTop5() {
+  const rivalEl = document.getElementById('rivalInOverlay');
+  if (rivalEl) rivalEl.textContent = getRivalTextForOverlay();
+  hideOverlay();
+  renderLeaderboard();
+  top5Overlay.classList.add('show');
+}
+
+function closeTop5() {
+  top5Overlay.classList.remove('show');
+}
+
+function showToast(text) {
+  miniToast.textContent = text;
+  miniToast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => miniToast.classList.remove('show'), 850);
+}
+
+function triggerProgressFX(level) {
+  progressGlow.className = 'progress-glow';
+  pulseRing.className = 'pulse-ring';
+  void progressGlow.offsetWidth;
+  progressGlow.classList.add(level === 1 ? 'show-1' : 'show-2');
+  pulseRing.classList.add(level === 1 ? 'animate-1' : 'animate-2');
+
+  clearTimeout(triggerProgressFX.timer);
+  triggerProgressFX.timer = setTimeout(() => {
+    progressGlow.className = 'progress-glow';
+    pulseRing.className = 'pulse-ring';
+  }, 760);
+}
+
+function updateScore() {
+  scoreEl.textContent = score;
+  bestEl.textContent = best;
+renderLeaderboard();
+renderChallengeSession();
+  const nearBest = best > 0 && score >= best - 2;
+  scoreEl.classList.toggle('near', nearBest);
+}
+
+function clearVisuals() {
+  cells.forEach(c => c.classList.remove('active', 'hit', 'intense'));
+}
+
+function pickTwo() {
+  const arr = [];
+  while (arr.length < 2) {
+    const n = Math.floor(Math.random() * GRID_SIZE);
+    if (!arr.includes(n)) arr.push(n);
+  }
+  return arr;
+}
+
+function getSpeedForScore(currentScore) {
+  return SPEED_MAP[currentScore] || 380;
+}
+
+function getStageIndex(currentScore) {
+  let idx = 0;
+  for (let i = 0; i < STAGE_LABELS.length; i++) {
+    if (currentScore >= STAGE_LABELS[i].score) idx = i;
+  }
+  return idx;
+}
+
+function applyStageEffects() {
+  speed = Math.max(MIN_SPEED, getSpeedForScore(score));
+  const stageIndex = getStageIndex(score);
+
+  const intense = score >= 29;
+  activeIndices.forEach(i => {
+    if (intense) cells[i].classList.add('intense');
+  });
+
+  if (stageIndex > latestStageIndex) {
+    latestStageIndex = stageIndex;
+    const label = STAGE_LABELS[stageIndex].label;
+    if (label) {
+      statusEl.textContent = label;
+      beep(760 + stageIndex * 30, 0.05, 'triangle', 0.025);
+      vibrate(22);
+    }
+  }
+}
+
+function showCombo() {
+  if (combo < 2) {
+    comboEl.classList.remove('show');
+    return;
+  }
+  comboEl.textContent = `COMBO x${combo}`;
+  comboEl.classList.add('show');
+  clearTimeout(comboTimer);
+  comboTimer = setTimeout(() => comboEl.classList.remove('show'), 320);
+}
+
+function showTargets() {
+  if (!playing) return;
+
+  roundId += 1;
+  const thisRound = roundId;
+
+  clearVisuals();
+  tappedIndices = [];
+  firstTapTime = 0;
+  activeIndices = pickTwo();
+  activeIndices.forEach(i => cells[i].classList.add('active'));
+
+  applyStageEffects();
+
+  const stageIndex = getStageIndex(score);
+  metronomeTick(stageIndex);
+  updateBackgroundHum(stageIndex);
+
+  if (best > 0 && score >= best - 2) {
+    statusEl.textContent = '🔥 قريب من رقمك!';
+  } else if (STAGE_LABELS[stageIndex].label) {
+    statusEl.textContent = STAGE_LABELS[stageIndex].label;
+  } else {
+    statusEl.textContent = 'اضغط الهدفين الآن';
+  }
+
+  clearTimeout(hideTimer);
+  hideTimer = setTimeout(() => {
+    if (!playing || thisRound !== roundId) return;
+    if (tappedIndices.length === 0) {
+      endGame('ما ضغطت الهدفين!');
+    } else if (tappedIndices.length === 1) {
+      endGame('ما ضغطهم مع بعض!');
+    }
+  }, speed);
+}
+
+function nextRound() {
+  if (!playing) return;
+  setTimeout(showTargets, ROUND_GAP);
+}
+
+function hideOverlay() {
+  overlay.classList.remove('show');
+  top5Overlay.classList.remove('show');
+  challengeOverlay.classList.remove('show');
+  confirmResetOverlay.classList.remove('show');
+}
+
+function startGame() {
+  ensureAudio();
+  ensureBackgroundHum();
+  fadeOutBackgroundHum();
+  clearTimeout(hideTimer);
+  clearTimeout(comboTimer);
+  hideOverlay();
+  playing = true;
+  score = 0;
+  combo = 0;
+  speed = START_SPEED;
+  tappedIndices = [];
+  activeIndices = [];
+  firstTapTime = 0;
+  latestStageIndex = 0;
+  roundId = 0;
+  comboEl.classList.remove('show');
+  scoreEl.classList.remove('near');
+  clearVisuals();
+  updateScore();
+  statusEl.textContent = 'استعد';
+  setTimeout(() => { if (playing) showTargets(); }, 250);
+}
+
+function saveBest() {
+  localStorage.setItem('pulserush_best_v144_lb', String(best));
+}
+
+function showResult(reason, previousBest, becameNewBest, leaderboardHint) {
+  resultScore.textContent = score;
+  if (becameNewBest) {
+    resultTitle.textContent = '🏆 رقم جديد!';
+    resultSub.textContent = leaderboardHint || 'هذه أفضل نتيجة لك حتى الآن';
+    resultScore.textContent = score;
+    resultMeta.innerHTML = `أفضل نتيجة: <strong>${best}</strong>`;
+  } else if (previousBest > 0 && score >= previousBest - 2) {
+    const diff = Math.max(previousBest - score, 0);
+    resultTitle.textContent = '💥 كنت قريب جدًا!';
+    resultSub.textContent = diff === 0 ? 'عادلت أفضل نتيجة' : `باقي ${diff} وتكسرها`;
+    resultMeta.innerHTML = `نتيجتك الحالية: <strong>${score}</strong><br>أفضل نتيجة: <strong>${best}</strong><br>${leaderboardHint ? leaderboardHint + '<br>' : ''}سبب الخسارة: ${reason}`;
+  } else {
+    resultTitle.textContent = 'انتهت الجولة';
+    resultSub.textContent = reason;
+    resultMeta.innerHTML = `نتيجتك الحالية: <strong>${score}</strong><br>أفضل نتيجة: <strong>${best}</strong>${leaderboardHint ? '<br>' + leaderboardHint : ''}`;
+  }
+  overlay.classList.add('show');
+}
+
+function endGame(reason) {
+  playing = false;
+  clearTimeout(hideTimer);
+  clearVisuals();
+  combo = 0;
+  comboEl.classList.remove('show');
+
+  const previousBest = best;
+  let becameNewBest = false;
+  if (score > best) {
+    best = score;
+    becameNewBest = true;
+    saveBest();
+  }
+
+  const previousBoard = [...leaderboard];
+  updateLeaderboard(score);
+  if (currentChallengePlayer) {
+    addChallengeScore(currentChallengePlayer, score);
+    tryUpdateRival(currentChallengePlayer, score, previousBest);
+  }
+  const leaderboardInfo = getLeaderboardMessage(score, previousBoard);
+  const challengeHint = currentChallengePlayer ? getChallengeHint(currentChallengePlayer, score) : '';
+
+  updateScore();
+
+  if (becameNewBest) {
+    statusEl.innerHTML = `<span style="color:var(--success)">🏆 رقم جديد!</span>`;
+  } else if (previousBest > 0 && score >= previousBest - 2) {
+    statusEl.innerHTML = `<span class="danger">💥 كنت قريب جدًا!</span> — ${reason}`;
+  } else {
+    statusEl.innerHTML = `<span class="danger">انتهت الجولة</span> — السبب: ${reason}`;
+  }
+
+  
+showResult(reason, previousBest, becameNewBest, leaderboardInfo.text);
+
+if (becameNewBest && leaderboardInfo.rank === 1) {
+  celebrateWin(true);
+} else if (becameNewBest) {
+  celebrateWin(false);
+} else if (leaderboardInfo.rank === 1) {
+  celebrateWin(true);
+}
+
+
+  beep(180, 0.16, 'sawtooth', 0.045);
+  vibrate(70);
+  app.classList.remove('shake');
+  void app.offsetWidth;
+  app.classList.add('shake');
+  fadeOutBackgroundHum();
+}
+
+function handleTap(index) {
+  if (!playing) return;
+
+  if (!activeIndices.includes(index) || tappedIndices.includes(index)) {
+    endGame('ضغطت مربع غلط!');
+    return;
+  }
+
+  cells[index].classList.add('hit');
+  tappedIndices.push(index);
+  playTapConfirm();
+  vibrate(14);
+
+  const now = performance.now();
+  if (tappedIndices.length === 1) {
+    firstTapTime = now;
+    return;
+  }
+
+  if ((now - firstTapTime) > HIT_WINDOW) {
+    endGame('انتهى الوقت .. خلك أسرع!');
+    return;
+  }
+
+  score += 1;
+  combo += 1;
+  updateScore();
+  showCombo();
+
+  if (score === 20) {
+    triggerProgressFX(1);
+    showToast('🎁 إنجاز جديد!');
+    statusEl.innerHTML = '<span style="color:var(--success)">🎁 إنجاز جديد!</span>';
+    beep(980, 0.08, 'triangle', 0.03);
+    vibrate(34);
+  } else if (score === 40) {
+    triggerProgressFX(2);
+    showToast('🎁 مستوى متقدم!');
+    statusEl.innerHTML = '<span style="color:var(--success)">🎁 مستوى متقدم!</span>';
+    beep(1080, 0.09, 'triangle', 0.032);
+    vibrate(46);
+  } else {
+    statusEl.textContent = combo >= 2 ? 'ممتاز، استمر' : 'نجاح';
+  }
+
+  clearTimeout(hideTimer);
+  setTimeout(nextRound, 70);
+}
+
+startBtn.addEventListener('click', startGame);
+playAgainBtn.addEventListener('click', () => {
+  currentChallengePlayer = currentChallengePlayer || '';
+  startGame();
+});
+closeResultBtn.addEventListener('click', hideOverlay);
+leaderboardBtn.addEventListener('click', openTop5);
+challengeBtn.addEventListener('click', openChallenge);
+openTop5FromResultBtn.addEventListener('click', openTop5);
+closeTop5Btn.addEventListener('click', hideOverlay);
+closeChallengeBtn.addEventListener('click', hideOverlay);
+startChallengeBtn.addEventListener('click', () => {
+  const name = (challengeNameInput.value || '').trim();
+  if (!name) {
+    challengeNameInput.focus();
+    return;
+  }
+
+  const existingPlayer = challengeSession.find(item => item.name === name);
+
+  if (existingPlayer && currentChallengePlayer !== name) {
+    if (typeof showToast === 'function') {
+      showToast('الاسم موجود بالفعل');
+    }
+    const challengeSub = document.querySelector('.challenge-sub');
+    if (challengeSub) {
+      challengeSub.textContent = 'الاسم موجود بالفعل، اختر اسمًا مختلفًا أو استخدم زر ⟳ بجانب اللاعب الموجود.';
+    }
+    challengeNameInput.focus();
+    return;
+  }
+
+  currentChallengePlayer = name;
+  startGame();
+});
+clearChallengeSessionBtn.addEventListener('click', () => {
+  challengeSession = [];
+  saveChallengeSession();
+  renderChallengeSession();
+});
+
+resetBestIcon.addEventListener('click', () => {
+  hideOverlay();
+  confirmResetOverlay.classList.add('show');
+});
+
+confirmResetBtn.addEventListener('click', () => {
+  best = 0;
+  localStorage.removeItem('pulserush_best_v144_lb');
+  updateScore();
+  hideOverlay();
+  statusEl.textContent = 'تم بدء سجل جديد';
+});
+
+cancelResetBtn.addEventListener('click', () => {
+  hideOverlay();
+});
+
+
+const canvas = document.getElementById('celebrationCanvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function flashScreen(strong=false){
+  const app = document.getElementById('app');
+  app.style.transition = 'transform 0.08s ease, filter 0.08s ease';
+  app.style.filter = strong ? 'brightness(1.22)' : 'brightness(1.12)';
+  setTimeout(() => {
+    app.style.filter = 'brightness(1)';
+  }, 140);
+}
+
+function freezeMoment(ms=160){
+  const wasPlaying = playing;
+  playing = false;
+  clearTimeout(hideTimer);
+  setTimeout(() => {
+    if (wasPlaying === false) return;
+  }, ms);
+}
+
+function pulseScore(strong=false){
+  const target = document.getElementById('score');
+  if(!target) return;
+  target.style.transition = 'transform 0.12s ease, color 0.12s ease';
+  target.style.transform = strong ? 'scale(1.22)' : 'scale(1.14)';
+  target.style.color = strong ? '#ffd166' : '#7af4cb';
+  setTimeout(() => {
+    target.style.transform = '';
+    target.style.color = '';
+  }, 420);
+}
+
+function burstEffect(strong=false) {
+  const particles = [];
+  const count = strong ? 90 : 50;
+  const colors = strong ? ['#ffd166', '#ffffff', '#ff9f1c'] : ['#7af4cb', '#ffffff', '#31efd0'];
+
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: canvas.width/2,
+      y: canvas.height/2,
+      angle: Math.random()*Math.PI*2,
+      speed: strong ? Math.random()*9+3 : Math.random()*6+2,
+      life: strong ? 85 : 65,
+      size: strong ? Math.random()*4+2 : Math.random()*3+2,
+      color: colors[Math.floor(Math.random()*colors.length)]
+    });
+  }
+
+  function animate(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.x += Math.cos(p.angle)*p.speed;
+      p.y += Math.sin(p.angle)*p.speed;
+      p.speed *= 0.97;
+      p.life--;
+      ctx.globalAlpha = Math.max(p.life / (strong ? 85 : 65), 0);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+
+    if(particles.some(p=>p.life>0)){
+      requestAnimationFrame(animate);
+    } else {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+  animate();
+}
+
+function playWinSound(strong=false){
+  if(strong){
+    beep(620, 0.07, 'triangle', 0.04);
+    setTimeout(() => beep(780, 0.08, 'triangle', 0.045), 80);
+    setTimeout(() => beep(980, 0.12, 'sine', 0.05), 170);
+  } else {
+    beep(560, 0.06, 'triangle', 0.035);
+    setTimeout(() => beep(760, 0.10, 'sine', 0.045), 80);
+  }
+}
+
+function celebrateWin(strong=false){
+  flashScreen(strong);
+  pulseScore(strong);
+  burstEffect(strong);
+  playWinSound(strong);
+  if (navigator.vibrate) navigator.vibrate(strong ? [40, 30, 60] : [24, 20, 34]);
+}
+
+
+
+// === Clean Rhythm + Rising Background Tension ===
+let backgroundHum = null;
+let backgroundHumGain = null;
+let currentHumStage = -1;
+
+function ensureBackgroundHum() {
+  ensureAudio();
+  if (backgroundHum || !audioCtx) return;
+
+  backgroundHum = audioCtx.createOscillator();
+  backgroundHumGain = audioCtx.createGain();
+
+  backgroundHum.type = 'sine';
+  backgroundHum.frequency.value = 150;
+  backgroundHumGain.gain.value = 0.0001;
+
+  backgroundHum.connect(backgroundHumGain);
+  backgroundHumGain.connect(audioCtx.destination);
+  backgroundHum.start();
+}
+
+function metronomeTick(stageIndex = 0) {
+  const freq = 520 + (stageIndex * 16);
+  const volume = 0.032;
+  beep(freq, 0.022, 'square', volume);
+}
+
+function playTapConfirm() {
+  beep(720, 0.018, 'triangle', 0.022);
+}
+
+function updateBackgroundHum(stageIndex = 0) {
+  ensureBackgroundHum();
+  if (!backgroundHum || !backgroundHumGain || !audioCtx) return;
+
+  if (currentHumStage === stageIndex) return;
+  currentHumStage = stageIndex;
+
+  const stageFreqMap = [150, 165, 185, 215, 255];
+  const stageGainMap = [0.0001, 0.005, 0.008, 0.011, 0.014];
+
+  const targetFreq = stageFreqMap[Math.min(stageIndex, stageFreqMap.length - 1)];
+  const targetGain = stageGainMap[Math.min(stageIndex, stageGainMap.length - 1)];
+
+  backgroundHum.frequency.cancelScheduledValues(audioCtx.currentTime);
+  backgroundHum.frequency.linearRampToValueAtTime(targetFreq, audioCtx.currentTime + 0.18);
+
+  backgroundHumGain.gain.cancelScheduledValues(audioCtx.currentTime);
+  backgroundHumGain.gain.linearRampToValueAtTime(targetGain, audioCtx.currentTime + 0.22);
+}
+
+function fadeOutBackgroundHum() {
+  if (!backgroundHumGain || !audioCtx) return;
+  backgroundHumGain.gain.cancelScheduledValues(audioCtx.currentTime);
+  backgroundHumGain.gain.linearRampToValueAtTime(0.0001, audioCtx.currentTime + 0.18);
+  currentHumStage = -1;
+}
+
+</script>
+</body>
+</html>
